@@ -3,99 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drug Time Checker</title>
+    <title>Drug Dose Time Disclaimer</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 20px;
-            background-color: #f4f4f9;
-        }
-        form {
-            max-width: 400px;
+            max-width: 600px;
             margin: 0 auto;
             padding: 20px;
+            text-align: center;
+            background-color: #f4f4f9;
+        }
+        .disclaimer {
             background-color: #fff;
             border: 1px solid #ddd;
             border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: left; /* Ensure the disclaimer text is left-aligned */
         }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input, select, button {
-            width: 100%;
-            margin-bottom: 15px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
+        .confirm-button {
             background-color: #007BFF;
             color: white;
+            border: none;
+            padding: 10px 20px;
             font-size: 16px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .result {
-            max-width: 400px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #e8f5e9;
-            border: 1px solid #c8e6c9;
             border-radius: 5px;
-            color: #388e3c;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .confirm-button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <h1>Drug Time Checker</h1>
-    <form id="timeForm">
-        <label for="drugName">Drug Name:</label>
-        <select id="drugName" required>
-            <option value="">Select a drug</option>
-            <option value="special">Special Handling Drug</option>
-            <option value="regular">Regular Drug</option>
-        </select>
+    <div class="disclaimer">
+        <h1>Important Disclaimer</h1>
+        <p>Use of MTRT does not apply to:</p>
+        <ul>
+            <li>STAT doses</li>
+            <li>First doses and loading doses</li>
+            <li>One-time doses</li>
+            <li>Specifically timed doses (e.g. antibiotics for pre-procedure, drug desensitization protocols)</li>
+            <li>Time-sequenced or concentrationcritical medications (e.g. chemotherapeutic, rescue agents)</li>
+            <li>Drugs administered at specific times to ensure accurate peak/trough/serum drug levels (e.g. vancomycin)</li>
+            <li>PPN medications</li>
+        </ul>
+    </div>
 
-        <label for="frequency">Frequency (times per day):</label>
-        <input type="number" id="frequency" min="1" max="24" required>
-
-        <label for="lastTaken">Last Taken Time:</label>
-        <input type="datetime-local" id="lastTaken" required>
-
-        <button type="button" onclick="calculateNextDose()">Calculate Next Dose</button>
-    </form>
-
-    <div id="result" class="result" style="display: none;"></div>
+    <button class="confirm-button" onclick="proceedToDrugTimeChecker()">
+        I Understand and Wish to Proceed
+    </button>
 
     <script>
-        function calculateNextDose() {
-            const drugName = document.getElementById('drugName').value;
-            const frequency = parseInt(document.getElementById('frequency').value, 10);
-            const lastTaken = new Date(document.getElementById('lastTaken').value);
-
-            if (!drugName || !frequency || isNaN(lastTaken)) {
-                alert('Please fill out all fields correctly.');
-                return;
-            }
-
-            let nextDose;
-
-            if (drugName === 'special') {
-                nextDose = new Date(lastTaken.getTime() + 12 * 60 * 60 * 1000); // Add 12 hours
-            } else {
-                const interval = 12 / frequency; // Interval in hours
-                nextDose = new Date(lastTaken.getTime() + interval * 60 * 60 * 1000);
-            }
-
-            const resultDiv = document.getElementById('result');
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = `The next dose can be given at: <strong>${nextDose.toLocaleString()}</strong>`;
+        function proceedToDrugTimeChecker() {
+            window.location.href = 'drug-time-checker.html';
         }
     </script>
 </body>

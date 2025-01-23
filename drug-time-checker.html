@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Time Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, button {
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 5px;
+            color: #388e3c;
+        }
+    </style>
+</head>
+<body>
+    <h1>Drug Time Checker</h1>
+    <form id="timeForm">
+        <label for="frequency">Frequency:</label>
+        <select id="frequency" required>
+            <option value="">Select frequency</option>
+            <option value="OM">OM</option>
+            <option value="BD">BD</option>
+            <option value="QDS">QDS</option>
+            <option value="Q24H">Q24H</option>
+            <option value="Q12H">Q12H</option>
+            <option value="Q8H">Q8H</option>
+            <option value="Q6H">Q6H</option>
+            <option value="EOD">EOD</option>
+            <option value="Q48H">Q48H</option>
+        </select>
+
+        <label for="lastTaken">Last Given Time:</label>
+        <input type="datetime-local" id="lastTaken" required>
+
+        <button type="button" onclick="calculateNextDose()">Calculate Next Dose</button>
+    </form>
+
+    <div id="result" class="result" style="display: none;"></div>
+
+    <script>
+        function formatSingaporeDateTime(date) {
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+        }
+
+        function calculateNextDose() {
+            const frequency = document.getElementById('frequency').value;
+            const lastTaken = new Date(document.getElementById('lastTaken').value);
+
+            if (!frequency || isNaN(lastTaken)) {
+                alert('Please fill out all fields correctly.');
+                return;
+            }
+
+            const frequencyParams = {
+                'OM': { T: 24, Tmin: 18, Tmax: 30, standardDoseTime: ['07:00'] },
+                'BD': { T: 12, Tmin: 9, Tmax: 15, standardDoseTime: ['07:00', '20:00'] },
+                'QDS': { T: 6, Tmin: 4, Tmax: 8, standardDoseTime: ['07:00', '14:00', '20:00', '02:00'] },
+                'Q24H': { T: 24, Tmin: 18, Tmax: 30, standardDoseTime: ['07:00'] },
+                'Q12H': { T: 12, Tmin: 9, Tmax: 15, standardDoseTime: ['07:00', '20:00'] },
+                'Q8H': { T: 8, Tmin: 6, Tmax: 10, standardDoseTime: ['07:00', '16:00', '00:00'] },
+                'Q6H': { T: 6, Tmin: 4, Tmax: 8, standardDoseTime: ['07:00', '14:00', '20:00', '02:00'] },
+                'EOD': { T: 48, Tmin: 36, Tmax: 54, standardDoseTime: ['07:00'] },
+                'Q48H': { T: 48, Tmin: 36, Tmax: 54, standardDoseTime: ['07:00'] }
+            };
+
+            const { T, Tmin, Tmax, standardDoseTime } = frequencyParams[frequency];
+
+            // Find next dose time(s)
+            const doses = [];
+            let currentDate = new Date(lastTaken);
+            
+            // Determine number of doses to show based on frequency
+            const dosesToShow = T >= 24 ? 1 : Math.floor(24 / T);
+
+            for (let i = 0; i < dosesToShow; i++) {
+                // Find next dose time
+                let nextDoseTime = findNextDoseTime(currentDate, standardDoseTime, Tmin, T);
+                doses.push(formatSingaporeDateTime(nextDoseTime));
+                currentDate = nextDoseTime;
+            }
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                Next Dose Time(s):<br>
+                <strong>${doses.join('<br>')}</strong>
+            `;
+        }
+
+        function findNextDoseTime(lastTaken, standardDoseTimes, minHours, interval) {
+            // Convert interval to hours
+            const intervalInHours = interval;
+
+            // Find the next possible dose time by adding minimum hours to last taken time
+            const earliestNextDose = new Date(lastTaken.getTime() + minHours * 60 * 60 * 1000);
+            
+            // Convert standard dose times to Date objects for comparison
+            const standardDoseDateTimes = standardDoseTimes.map(time => {
+                const [hours, minutes] = time.split(':');
+                const standardDoseDateTime = new Date(lastTaken);
+                standardDoseDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                
+                // Adjust date if standard time is earlier than or equal to last taken time
+                while (standardDoseDateTime <= lastTaken) {
+                    standardDoseDateTime.setDate(standardDoseDateTime.getDate() + 1);
+                }
+                
+                return standardDoseDateTime;
+            });
+
+            // Find the earliest standard dose time after last taken time
+            const nextStandardDoseTimes = standardDoseDateTimes.filter(doseTime => doseTime >= lastTaken);
+            const nextStandardDoseTime = nextStandardDoseTimes.length > 0 ? nextStandardDoseTimes.reduce((min, doseTime) => doseTime < min ? doseTime : min) : null;
+
+            if (nextStandardDoseTime && nextStandardDoseTimes.length > 0) {
+                if (nextStandardDoseTime < earliestNextDose) {
+                    // If earliest standard dose time is earlier than earliest next dose, return earliest next dose
+                    return roundUpToNextHour(earliestNextDose);
+                } else {
+                    // If earliest standard dose time is later than or equal to earliest next dose, return earliest standard dose time
+                    return nextStandardDoseTime;
+                }
+            }
+
+            return earliestNextDose;
+        }
+
+        function roundUpToNextHour(date) {
+            const roundedDate = new Date(date);
+            roundedDate.setHours(roundedDate.getHours() + 1);
+            roundedDate.setMinutes(0);
+            roundedDate.setSeconds(0);
+            roundedDate.setMilliseconds(0);
+            return roundedDate;
+        }
+    </script>
+</body>
+</html>
