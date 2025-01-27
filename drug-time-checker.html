@@ -160,9 +160,13 @@
             // Now next standard dose time is too close to last taken time, and yet the following standard dose time is too far away.
             // If we set next dose time to expectedDoseDateTime, then subsequent dose time will take long time
             // to catch standard dose time.
-            // So, if the expectedDoseDateTime is closer to standardDoseDateTimes[1] than standardDoseDateTimes[1],
+            // So we find index of standardDoseDateTimes such that standardDoseDateTimes[index] <= expectedDoseDateTime < standardDoseDateTimes[index + 1].
+            // If the expectedDoseDateTime is closer to standardDoseDateTimes[index + 1] than standardDoseDateTimes[index],
             // set nextDoseTime to earliestNextDose + 1hr. Otherwise, set it to expectedDoseDateTime + interval - minHours - 1hr
-            const index = standardDoseDateTimes.findIndex(time => time >= earliestNextDose);
+            const index = standardDoseDateTimes
+                .map((time, i) => ({ time, i }))
+                .reverse()
+                .find(({ time }) => time < expectedDoseDateTime)?.i ?? 0;
 
             if (expectedDoseDateTime - standardDoseDateTimes[index] < standardDoseDateTimes[index + 1] - expectedDoseDateTime) {
                 nextDoseTime = new Date(earliestNextDose.getTime() + 60 * 60 * 1000);
