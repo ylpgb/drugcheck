@@ -52,6 +52,15 @@
         }
     </style>
 </head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TTWMJ5CDRN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-TTWMJ5CDRN');
+</script>
 <body>
     <h1>Drug Time Checker</h1>
     <form id="timeForm">
@@ -136,6 +145,13 @@
             Next Dose Time(s):<br>
             <strong>${doses.join('<br>')}</strong>
             `;
+
+            // Track the button click as an event in Google Analytics
+            gtag('event', 'calculate_dose_click', {
+              'event_category': 'engagement',
+              'event_label': 'Calculate Next Dose',
+              'value': 1
+            });
         }
 
         function findNextDoseTime(lastTaken, standardDoseTimes, minHours, interval) {
