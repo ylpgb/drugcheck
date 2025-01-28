@@ -150,7 +150,9 @@
             gtag('event', 'calculate_dose_click', {
               'event_category': 'engagement',
               'event_label': 'Calculate Next Dose',
-              'value': 1
+              'value': 1,
+              'frequency': frequency,  // Track frequency
+              'lastTaken': lastTaken   // Track lastTaken time
             });
         }
 
