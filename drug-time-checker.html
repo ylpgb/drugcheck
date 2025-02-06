@@ -81,6 +81,12 @@
         <label for="lastTaken">Last Given Time:</label>
         <input type="datetime-local" id="lastTaken" required>
 
+        <label for="calculateOption">Calculate Option:</label>
+        <select id="calculateOption" required>
+            <option value="early">Prefer Early Time</option>
+            <option value="standard">Prefer Standard Time</option>
+        </select>
+
         <button type="button" onclick="calculateNextDose()">Calculate Next Dose</button>
     </form>
 
@@ -96,25 +102,27 @@
             
             return `${day}/${month}/${year} ${hours}:${minutes}`;
         }
+
         function calculateNextDose() {
             const frequency = document.getElementById('frequency').value;
             const lastTaken = new Date(document.getElementById('lastTaken').value);
+            const calculateOption = document.getElementById('calculateOption').value;
 
             if (!frequency || isNaN(lastTaken)) {
-            alert('Please fill out all fields correctly.');
-            return;
+                alert('Please fill out all fields correctly.');
+                return;
             }
 
             const frequencyParams = {
-            'OM': { T: 24, Tmin: 18, Tmax: 30, standardDoseTime: ['07:00'] },
-            'BD': { T: 12, Tmin: 9, Tmax: 15, standardDoseTime: ['07:00', '20:00'] },
-            'QDS': { T: 6, Tmin: 4, Tmax: 8, standardDoseTime: ['07:00', '14:00', '20:00', '02:00'] },
-            'Q24H': { T: 24, Tmin: 18, Tmax: 30, standardDoseTime: ['07:00', '20:00'] },
-            'Q12H': { T: 12, Tmin: 9, Tmax: 15, standardDoseTime: ['07:00', '20:00'] },
-            'Q8H': { T: 8, Tmin: 6, Tmax: 10, standardDoseTime: ['07:00', '16:00', '00:00'] },
-            'Q6H': { T: 6, Tmin: 4, Tmax: 8, standardDoseTime: ['07:00', '14:00', '20:00', '02:00'] },
-            'EOD': { T: 48, Tmin: 36, Tmax: 54, standardDoseTime: ['07:00'] },
-            'Q48H': { T: 48, Tmin: 36, Tmax: 54, standardDoseTime: ['07:00'] }
+                'OM': { T: 24, Tmin: 18, Tmax: 30, standardDoseTime: ['07:00'] },
+                'BD': { T: 12, Tmin: 9, Tmax: 15, standardDoseTime: ['07:00', '20:00'] },
+                'QDS': { T: 6, Tmin: 4, Tmax: 8, standardDoseTime: ['07:00', '14:00', '20:00', '02:00'] },
+                'Q24H': { T: 24, Tmin: 18, Tmax: 30, standardDoseTime: ['07:00', '20:00'] },
+                'Q12H': { T: 12, Tmin: 9, Tmax: 15, standardDoseTime: ['07:00', '20:00'] },
+                'Q8H': { T: 8, Tmin: 6, Tmax: 10, standardDoseTime: ['07:00', '16:00', '00:00'] },
+                'Q6H': { T: 6, Tmin: 4, Tmax: 8, standardDoseTime: ['07:00', '14:00', '20:00', '02:00'] },
+                'EOD': { T: 48, Tmin: 36, Tmax: 54, standardDoseTime: ['07:00'] },
+                'Q48H': { T: 48, Tmin: 36, Tmax: 54, standardDoseTime: ['07:00'] }
             };
 
             const { T, Tmin, Tmax, standardDoseTime } = frequencyParams[frequency];
@@ -127,36 +135,42 @@
             const dosesToShow = T >= 24 ? 2 : 2 * Math.floor(24 / T);
 
             for (let i = 0; i < dosesToShow; i++) {
-            // Find next dose time
-            let nextDoseTime = findNextDoseTime(currentDate, standardDoseTime, Tmin, T);
-            const hoursDifference = Math.floor((nextDoseTime - currentDate) / (60 * 60 * 1000));
-            const isStandardDoseTime = standardDoseTime.some(time => {
-                const [hours, minutes] = time.split(':');
-                return nextDoseTime.getHours() === parseInt(hours) && nextDoseTime.getMinutes() === parseInt(minutes);
-            });
-            const doseText = `${formatSingaporeDateTime(nextDoseTime)} (+${hoursDifference} hours)`;
-            doses.push(isStandardDoseTime ? `<span style="color: blue;">${doseText}</span>` : doseText);
-            currentDate = nextDoseTime;
+                // Find next dose time based on the selected calculate option
+                let nextDoseTime;
+                if (calculateOption === 'early') {
+                    nextDoseTime = findNextDoseTimeEarly(currentDate, standardDoseTime, Tmin, T);
+                } else {
+                    nextDoseTime = findNextDoseTimeStandard(currentDate, standardDoseTime, Tmin, T);
+                }
+                const hoursDifference = Math.floor((nextDoseTime - currentDate) / (60 * 60 * 1000));
+                const isStandardDoseTime = standardDoseTime.some(time => {
+                    const [hours, minutes] = time.split(':');
+                    return nextDoseTime.getHours() === parseInt(hours) && nextDoseTime.getMinutes() === parseInt(minutes);
+                });
+                const doseText = `${formatSingaporeDateTime(nextDoseTime)} (+${hoursDifference} hours)`;
+                doses.push(isStandardDoseTime ? `<span style="color: blue;">${doseText}</span>` : doseText);
+                currentDate = nextDoseTime;
             }
-        
+
             const resultDiv = document.getElementById('result');
             resultDiv.style.display = 'block';
             resultDiv.innerHTML = `
-            Next Dose Time(s):<br>
-            <strong>${doses.join('<br>')}</strong>
+                Next Dose Time(s):<br>
+                <strong>${doses.join('<br>')}</strong>
             `;
 
             // Track the button click as an event in Google Analytics
             gtag('event', 'calculate_dose_click', {
-              'event_category': 'engagement',
-              'event_label': 'Calculate Next Dose',
-              'value': 1,
-              'frequency': frequency,  // Track frequency
-              'lastTaken': lastTaken   // Track lastTaken time
+                'event_category': 'engagement',
+                'event_label': 'Calculate Next Dose',
+                'value': 1,
+                'frequency': frequency,  // Track frequency
+                'calculateOption': calculateOption,  // Track calculate option
+                'lastTaken': lastTaken   // Track lastTaken time
             });
         }
 
-        function findNextDoseTime(lastTaken, standardDoseTimes, minHours, interval) {
+        function findNextDoseTimeStandard(lastTaken, standardDoseTimes, minHours, interval) {
             // Get the next possible dose time by adding minimum hours to last taken time
             const earliestNextDose = new Date(lastTaken.getTime() + minHours * 60 * 60 * 1000);
 
@@ -170,7 +184,7 @@
             // and it contains the next dose time(s) after last taken time, we can just get the first element
             let nextDoseTime = earliestNextDose;
 
-            const nextStandardDoseTime = standardDoseDateTimes.find(time => stdDoseTimeWithinRange(time, expectedDoseDateTime, interval - minHours));
+            const nextStandardDoseTime = standardDoseDateTimes.find(time => stdDoseTimeWithinRange(time, expectedDoseDateTime, interval - minHours, interval - minHours));
             if (nextStandardDoseTime) {
                 return roundUpToNextHour(nextStandardDoseTime);
             }
@@ -181,6 +195,7 @@
             // So we find index of standardDoseDateTimes such that standardDoseDateTimes[index] <= expectedDoseDateTime < standardDoseDateTimes[index + 1].
             // If the expectedDoseDateTime is closer to standardDoseDateTimes[index + 1] than standardDoseDateTimes[index],
             // set nextDoseTime to earliestNextDose + 1hr. Otherwise, set it to expectedDoseDateTime + interval - minHours - 1hr
+
             const index = standardDoseDateTimes
                 .map((time, i) => ({ time, i }))
                 .reverse()
@@ -195,10 +210,35 @@
             return roundUpToNextHour(nextDoseTime);
         }
 
-        // Check if standardDoseTime is within range of midTime +/- divation
-        function stdDoseTimeWithinRange(standardDoseTime, midTime, divation) {
-            const lowerBound = new Date(midTime.getTime() - divation * 60 * 60 * 1000);
-            const upperBound = new Date(midTime.getTime() + divation * 60 * 60 * 1000);
+        function findNextDoseTimeEarly(lastTaken, standardDoseTimes, minHours, interval) {
+            // Get the next possible dose time by adding minimum hours to last taken time
+            const earliestNextDose = new Date(lastTaken.getTime() + minHours * 60 * 60 * 1000);
+
+            // Get the next expected dose time after last taken time
+            const expectedDoseDateTime = new Date(lastTaken.getTime() + interval * 60 * 60 * 1000);
+
+            // Get the standard dose time(s) after last taken time
+            const standardDoseDateTimes = getStandardDoseDateTimes(standardDoseTimes, lastTaken, interval);
+
+            // As we are sure that the standardDoseDateTimes is sorted in ascending order,
+            // and it contains the next dose time(s) after last taken time, we can just get the first element
+            let nextDoseTime = earliestNextDose;
+
+            const nextStandardDoseTime = standardDoseDateTimes.find(time => stdDoseTimeWithinRange(time, expectedDoseDateTime, interval - minHours, Math.floor(interval - minHours)/2));
+            if (nextStandardDoseTime) {
+                return roundUpToNextHour(nextStandardDoseTime);
+            }
+
+            // Well, it turns out preferred time is still earliestNextDose + 1hr
+            nextDoseTime = new Date(earliestNextDose.getTime() + 60 * 60 * 1000);
+
+            return roundUpToNextHour(nextDoseTime);
+        }
+
+        // Check if standardDoseTime is within range of [midTime - lDelta, midTime + uDelta
+        function stdDoseTimeWithinRange(standardDoseTime, midTime, lDelta, uDelta) {
+            const lowerBound = new Date(midTime.getTime() - lDelta * 60 * 60 * 1000);
+            const upperBound = new Date(midTime.getTime() + uDelta * 60 * 60 * 1000);
             return standardDoseTime >= lowerBound && standardDoseTime <= upperBound;
         }
 
