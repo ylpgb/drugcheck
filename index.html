@@ -22,7 +22,7 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             text-align: left; /* Ensure the disclaimer text is left-aligned */
         }
-        .confirm-button {
+        .confirm-button, .proceed-button, .next-button {
             background-color: #007BFF;
             color: white;
             border: none;
@@ -32,8 +32,17 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
-        .confirm-button:hover {
+        .confirm-button:hover, .proceed-button:hover, .next-button:hover {
             background-color: #0056b3;
+        }
+        .hidden-section {
+            display: none;
+            margin-top: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -55,17 +64,39 @@
             <li>First doses and loading doses</li>
             <li>One-time doses</li>
             <li>Specifically timed doses (e.g. antibiotics for pre-procedure, drug desensitization protocols)</li>
-            <li>Time-sequenced or concentrationcritical medications (e.g. chemotherapeutic, rescue agents)</li>
+            <li>Time-sequenced or concentration critical medications (e.g. chemotherapeutic, rescue agents)</li>
             <li>Drugs administered at specific times to ensure accurate peak/trough/serum drug levels (e.g. vancomycin)</li>
             <li>PPN medications</li>
         </ul>
     </div>
 
-    <button class="confirm-button" onclick="proceedToDrugTimeChecker()">
+    <button class="confirm-button" onclick="showProceedSection()">
         I Understand and Wish to Proceed
     </button>
 
+    <div id="proceedSection" class="hidden-section">
+        <p>I have checked the drugs administered in <span style="color: red;"><b>A&E/Other Institution</b></span></p>
+        <button class="proceed-button" onclick="showNextSection()">
+            Yes / NA
+        </button>
+    </div>
+
+    <div id="nextSection" class="hidden-section">
+        <p>I have checked the drugs administered in <span style="color: red;"><b>Operating Theater</b></span></p>
+        <button class="next-button" onclick="proceedToDrugTimeChecker()">
+            Yes / NA
+        </button>
+    </div>
+
     <script>
+        function showProceedSection() {
+            document.getElementById('proceedSection').style.display = 'block';
+        }
+
+        function showNextSection() {
+            document.getElementById('nextSection').style.display = 'block';
+        }
+
         function proceedToDrugTimeChecker() {
             window.location.href = 'drug-time-checker.html';
         }

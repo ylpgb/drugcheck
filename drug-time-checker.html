@@ -78,7 +78,7 @@
             <option value="Q48H">Q48H</option>
         </select>
 
-        <label for="lastTaken">Last Given Time:</label>
+        <label for="lastTaken">Last Given at:</label>
         <input type="datetime-local" id="lastTaken" required>
 
         <label for="calculateOption">Calculate Option:</label>
@@ -147,7 +147,7 @@
                     const [hours, minutes] = time.split(':');
                     return nextDoseTime.getHours() === parseInt(hours) && nextDoseTime.getMinutes() === parseInt(minutes);
                 });
-                const doseText = `${formatSingaporeDateTime(nextDoseTime)} (+${hoursDifference} hours)`;
+                const doseText = `${i+1}): ${formatSingaporeDateTime(nextDoseTime)} (+${hoursDifference} hours)`;
                 doses.push(isStandardDoseTime ? `<span style="color: blue;">${doseText}</span>` : doseText);
                 currentDate = nextDoseTime;
             }
